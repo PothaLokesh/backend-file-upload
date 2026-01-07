@@ -3,7 +3,7 @@ import logger from "../utils/logger.js";
 
 // SIMPLE FILE UPLOAD
 // Saves file to local disk and returns path
-export const uploadFile = (req, res) => {
+export const uploadFile = (req, res, next) => {
     if (!req.file) {
         logger.warn("Upload attempt with no file");
         return res.status(400).json({ error: "No file uploaded" });
@@ -19,7 +19,7 @@ export const uploadFile = (req, res) => {
 
 // PROCESS EXCEL
 // Reads the file, validates content, and saves to DB
-export const processExcel = async (req, res) => {
+export const processExcel = async (req, res, next) => {
     const { filePath } = req.body;
 
     try {
@@ -35,18 +35,13 @@ export const processExcel = async (req, res) => {
             skippedRecords: skipped
         });
     } catch (err) {
-        if (err.message === "Invalid file path") {
-            logger.error(`Invalid file path: ${filePath}`);
-            return res.status(400).json({ error: "Invalid file path" });
-        }
-        logger.error(`Error processing file: ${err.message}`);
-        res.status(500).json({ error: "Internal server error" });
+        next(err);
     }
 };
 
 // GET ALL USERS
 // Supports pagination (page, limit) and filtering (education)
-export const getAllRecords = async (req, res) => {
+export const getAllRecords = async (req, res, next) => {
     try {
         const { page, limit, education } = req.query;
         const users = await FileService.getUsers({
@@ -57,7 +52,6 @@ export const getAllRecords = async (req, res) => {
 
         res.json(users);
     } catch (err) {
-        logger.error(`Error fetching records: ${err.message}`);
-        res.status(500).json({ error: "Internal server error" });
+        next(err);
     }
 };
